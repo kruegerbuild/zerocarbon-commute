@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
     const wallet = new ethers.Wallet(VERIFIER_PRIVATE_KEY);
     const signature = await wallet.signMessage(ethers.utils.arrayify(hash));
 
-    return res.status(200).json({ signature });
+    return res.status(200).json({ signature, signer: wallet.address });
   } catch (err) {
     console.error("attest error:", err);
     return res.status(500).json({ error: "Verifier service error" });
