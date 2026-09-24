@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeroCarbon Commute - BOT Chain Protocol</title>
+  <!-- Ethers.js v5 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --text: #f8fafc;
+      --emerald: #10b981;
+      --emerald-light: #34d399;
+      --cyan: #06b6d4;
+      --sky: #38bdf8;
+
+      --glass: rgba(30, 41, 59, 0.45);
+      --glass-strong: rgba(30, 41, 59, 0.62);
+      --glass-field: rgba(15, 23, 42, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-highlight: rgba(255, 255, 255, 0.10);
+      --blur: blur(22px) saturate(160%);
+    }
+
+    * { -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 680px;
+      margin: 30px auto;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* ---------- Ambient backdrop (gives the glass something to blur) ---------- */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(6, 182, 212, 0.10), transparent 60%),
+        var(--bg);
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.55;
+      will-change: transform;
+    }
+    .orb-1 { width: 380px; height: 380px; background: var(--emerald); top: -80px; left: -100px; animation: drift1 26s ease-in-out infinite alternate; }
+    .orb-2 { width: 340px; height: 340px; background: var(--cyan); top: 32%; right: -120px; opacity: 0.42; animation: drift2 32s ease-in-out infinite alternate; }
+    .orb-3 { width: 300px; height: 300px; background: #3b82f6; bottom: -100px; left: 18%; opacity: 0.32; animation: drift3 38s ease-in-out infinite alternate; }
+    @keyframes drift1 { to { transform: translate(90px, 120px) scale(1.12); } }
+    @keyframes drift2 { to { transform: translate(-110px, -80px) scale(1.15); } }
+    @keyframes drift3 { to { transform: translate(120px, -70px) scale(1.1); } }
+
+    /* ---------- Glass surfaces ---------- */
+    .card {
+      position: relative;
+      background: var(--glass);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 8px 32px rgba(2, 6, 23, 0.40),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+    }
+    /* soft diagonal sheen on every pane */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, var(--glass-highlight) 0%, rgba(255, 255, 255, 0) 42%);
+      pointer-events: none;
+    }
+    .card > * { position: relative; }
+    .card h3 { margin-top: 0; }
+
+    button {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.88), rgba(6, 182, 212, 0.78));
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      font-size: 1rem;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 6px 20px rgba(16, 185, 129, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      text-shadow: 0 1px 2px rgba(2, 6, 23, 0.35);
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+    }
+    button:hover {
+      filter: brightness(1.1) saturate(1.1);
+      box-shadow:
+        0 8px 26px rgba(16, 185, 129, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+    button:active { transform: translateY(1px); }
+    button:disabled {
+      background: rgba(71, 85, 105, 0.40);
+      border-color: rgba(255, 255, 255, 0.10);
+      color: rgba(248, 250, 252, 0.55);
+      box-shadow: none;
+      text-shadow: none;
+      filter: none;
+      transform: none;
+      cursor: not-allowed;
+    }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--sky);
+      outline-offset: 2px;
+    }
+
+    input, select {
+      padding: 12px;
+      width: 100%;
+      margin-top: 6px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: var(--glass-field);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      box-sizing: border-box;
+      box-shadow: inset 0 2px 6px rgba(2, 6, 23, 0.35);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: rgba(52, 211, 153, 0.65);
+      background: rgba(15, 23, 42, 0.62);
+    }
+    select option { background: #0f172a; color: #f8fafc; }
+
+    .badge {
+      background: rgba(51, 65, 85, 0.45);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--sky);
+      font-family: monospace;
+      display: inline-block;
+    }
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--emerald-light);
+      text-shadow: 0 0 18px rgba(52, 211, 153, 0.35);
+    }
+
+    .status-box {
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      word-break: break-all;
+      min-height: 40px;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border: 1px solid transparent;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .info  { background: rgba(2, 132, 199, 0.30);  border-color: rgba(56, 189, 248, 0.40);  color: #f0f9ff; }
+    .error { background: rgba(225, 29, 72, 0.30);  border-color: rgba(251, 113, 133, 0.45); color: #fff1f2; }
+
+    .logo-container { text-align: center; margin-bottom: 20px; }
+    .logo-container svg { max-width: 100%; height: auto; filter: drop-shadow(0 6px 18px rgba(16, 185, 129, 0.25)); }
+
+    .sim-note {
+      background: rgba(51, 65, 85, 0.40);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-left: 4px solid var(--sky);
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* ---------- Fallbacks ---------- */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .card { background: rgba(30, 41, 59, 0.92); }
+      .badge, .sim-note { background: rgba(51, 65, 85, 0.90); }
+      input, select { background: rgba(15, 23, 42, 0.90); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .orb { animation: none; }
+      button { transition: none; }
+    }
+    @media (max-width: 480px) {
+      body { margin: 10px auto; padding: 14px; }
+      .card { padding: 18px; border-radius: 14px; }
+      .orb { filter: blur(55px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient glass backdrop -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- App Header Logo (Horizontal) -->
+  <div class="logo-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="100%">
+      <defs>
+        <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10b981" />
+          <stop offset="100%" stop-color="#06b6d4" />
+        </linearGradient>
+        <linearGradient id="glassShine" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+          <stop offset="55%" stop-color="#ffffff" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      
+      <!-- Icon Mark -->
+      <g transform="translate(10, 10)">
+        <rect x="0" y="0" width="100" height="100" rx="24" fill="rgba(30,41,59,0.55)" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+        <rect x="0" y="0" width="100" height="100" rx="24" fill="url(#glassShine)"/>
+        <path d="M50 20 C30 20 25 45 50 80 C75 45 70 20 50 20 Z" fill="url(#brandGrad)"/>
+        <circle cx="50" cy="40" r="10" fill="#0f172a"/>
+      </g>
+    
+      <!-- Typography -->
+      <text x="130" y="62" fill="#f8fafc" font-family="'Segoe UI', sans-serif" font-weight="800" font-size="34" letter-spacing="1">ZeroCarbon</text>
+      <text x="130" y="92" fill="#10b981" font-family="'Segoe UI', sans-serif" font-weight="600" font-size="20" letter-spacing="6">COMMUTE</text>
+      
+      <!-- Network Badge -->
+      <rect x="470" y="42" width="110" height="26" rx="6" fill="rgba(51,65,85,0.55)" stroke="rgba(255,255,255,0.18)"/>
+      <text x="525" y="59" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-weight="700" font-size="12">BOT CHAIN</text>
+    </svg>
+  </div>
+
+  <!-- Wallet Connection -->
+  <div class="card">
+    <button id="connectBtn" onclick="connectWallet()">Connect MetaMask Wallet</button>
+    <div id="walletStatus" style="margin-top: 12px;" class="badge">Status: Disconnected</div>
+  </div>
+
+  <!-- Telemetry Simulator -->
+  <div class="card">
+    <h3>1. Log Your Commute with Verified Telemetry</h3>
+    
+    <div class="sim-note">
+      💡 <strong>Presentation Mode:</strong> Simulating real-time mobile GPS telemetry streams for the live hackathon demonstration.
+    </div>
+
+    <label>Transit Profile:</label>
+    <select id="mode" onchange="updateSimulatedValues()">
+      <option value="bike">🚴 Bicycle (15 km/h) - Valid Eco Transit</option>
+      <option value="walk">🚶 Walking (5 km/h) - Valid Eco Transit</option>
+      <option value="car">🚗 Automobile (60 km/h) - Rejection Test (>25 km/h Threshold)</option>
+    </select>
+
+    <label>Distance (Meters):</label>
+    <input type="number" id="distanceMeters" value="5000">
+
+    <label>Duration (Seconds):</label>
+    <input type="number" id="durationSeconds" value="1200">
+
+    <button id="submitBtn" onclick="submitVerifiedTrip()" disabled>Submit Trip with Signed Attestation</button>
+  </div>
+
+  <!-- Real-time Token Stats -->
+  <div class="card">
+    <h3>2. Your Verified On-Chain Balance</h3>
+    <p>Total Distance Logged: <span id="userDist" class="stat-val">0</span> km</p>
+    <p>ERC-20 Reward Balance: <span id="userRewards" class="stat-val">0</span> $GREEN</p>
+  </div>
+
+  <!-- Log Output -->
+  <div class="card">
+    <h3>Oracle & Network Logs</h3>
+    <div id="logBox" class="status-box info">Ready. Connect wallet to start.</div>
+  </div>
+
+  <script>
+    // --- CONFIGURATION ---
+    // !!! MUST UPDATE THIS WITH YOUR NEWLY DEPLOYED CONTRACT ADDRESS !!!
+    const contractAddress = "0x4d278F96E72E4E3feD2dCEA3b5D362318B33d7c2"; 
+    
+    // Verifier signing now happens server-side in /api/attest (the key never touches the browser).
+    const ATTEST_URL = "/api/attest";
+
+    // TESTING SWITCH
+    // true  = sign with the connected MetaMask wallet (old behaviour). Works with Live Server / file hosting,
+    //         but ONLY if the connected wallet is the contract's verifierAddress. Testnet use only.
+    // false = request the signature from /api/attest (required for real users and for mainnet).
+    const LOCAL_SIGNING_FOR_TESTING = true;
+
+    // Set to your TESTNET chain ID (a number, e.g. 12345) to block submissions on the wrong network.
+    // Leave as null to skip the check.
+    const EXPECTED_CHAIN_ID = null;
+
+    const contractABI = [
+      "function submitVerifiedTrip(bytes32 tripId, uint256 distanceMeters, uint256 durationSeconds, bytes32 routeHash, bytes signature) external",
+      "function balanceOf(address account) external view returns (uint256)",
+      "function totalDistanceMeters(address account) external view returns (uint256)"
+    ];
+
+    let provider, signer, contract, userAddress;
+
+    function log(msg, type = "info") {
+      const logBox = document.getElementById("logBox");
+      logBox.innerText = msg;
+      logBox.className = "status-box " + type;
+      console.log("[ZeroCarbon]", msg);
+    }
+
+    let connecting = false;
+
+    async function connectWallet() {
+      if (connecting) return;
+      if (!window.ethereum) {
+        alert("MetaMask or a Web3 provider is required.");
+        return;
+      }
+      connecting = true;
+      document.getElementById("connectBtn").disabled = true;
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        // 1. FORCE METAMASK TO PROMPT FOR ACCOUNT SELECTION
+        await window.ethereum.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }]
+        });
+
+        // 2. Get connected account
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+
+        document.getElementById("walletStatus").innerText = "Connected: " + userAddress.substring(0,6) + "..." + userAddress.substring(38);
+        document.getElementById("submitBtn").disabled = false;
+
+        if (ethers.utils.isAddress(contractAddress)) {
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+          log("Wallet connected! Ready to log commutes.");
+          await loadStats();
+        }
+      } catch (err) {
+        if (err.code === -32002) {
+          log("A MetaMask request is already open. Click the MetaMask icon and approve or cancel it.", "error");
+        } else {
+          log("Error connecting wallet: " + err.message, "error");
+        }
+      } finally {
+        connecting = false;
+        document.getElementById("connectBtn").disabled = false;
+      }
+    }
+
+    function updateSimulatedValues() {
+      const mode = document.getElementById("mode").value;
+      if (mode === "bike") {
+        document.getElementById("distanceMeters").value = 5000;
+        document.getElementById("durationSeconds").value = 1200; // 15 km/h
+      } else if (mode === "walk") {
+        document.getElementById("distanceMeters").value = 2000;
+        document.getElementById("durationSeconds").value = 1440; // 5 km/h
+      } else if (mode === "car") {
+        document.getElementById("distanceMeters").value = 20000;
+        document.getElementById("durationSeconds").value = 1200; // 60 km/h
+      }
+      // Custom mode keeps current input values
+    }
+
+    async function submitVerifiedTrip() {
+      if (!contract) return log("Error: Wallet not connected.", "error");
+
+      try {
+        const distanceMeters = parseInt(document.getElementById("distanceMeters").value);
+        const durationSeconds = parseInt(document.getElementById("durationSeconds").value);
+
+        if (!(distanceMeters > 0) || !(durationSeconds > 0)) {
+          return log("Error: Distance and duration must be greater than zero.", "error");
+        }
+
+        log("1/3: Fetching unique tripId using current block timestamp and route hash...");
+        
+        // Safety check for critical hidden variables previously discussed
+        if (!userAddress || !contractAddress) {
+            return log("❌ Configuration Error: missing user or contract address. Ensure contractAddress is set.", "error");
+        }
+
+        // Improved tripId creation to avoid millisecond collisions, uses timestamp and route hash.
+        const tripId = ethers.utils.solidityKeccak256(["address", "uint256", "bytes32"], [userAddress, Date.now(), ethers.utils.formatBytes32String("ZCC_ROUTE_DEMO")]);
+        
+        const mockRouteCoords = "[[37.7749,-122.4194],[37.7752,-122.4180]]"; 
+        const routeHash = ethers.utils.solidityKeccak256(["string"], [mockRouteCoords]);
+
+        const network = await provider.getNetwork();
+        const chainId = network.chainId;
+
+        if (EXPECTED_CHAIN_ID !== null && chainId !== EXPECTED_CHAIN_ID) {
+          return log("❌ Wrong network: switch MetaMask to the testnet (chain ID " + EXPECTED_CHAIN_ID + ").", "error");
+        }
+
+        let signature;
+
+        if (LOCAL_SIGNING_FOR_TESTING) {
+          log("2/3: [TEST MODE] Signing attestation with the connected wallet...");
+
+          // Includes contractAddress and chainId to prevent cross-deployment & cross-chain replay
+          const messageHash = ethers.utils.solidityKeccak256(
+            ["address", "address", "bytes32", "uint256", "uint256", "bytes32", "uint256"],
+            [userAddress, contractAddress, tripId, distanceMeters, durationSeconds, routeHash, chainId]
+          );
+          signature = await signer.signMessage(ethers.utils.arrayify(messageHash));
+        } else {
+          log("2/3: Requesting attestation from verifier service...");
+
+          const res = await fetch(ATTEST_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user: userAddress,
+              tripId,
+              distanceMeters,
+              durationSeconds,
+              routeHash,
+              chainId
+            })
+          });
+
+          let data = {};
+          try { data = await res.json(); } catch (_) { /* non-JSON response */ }
+
+          if (!res.ok || !data.signature) {
+            return log(
+              "❌ Verifier rejected the trip: " + (data.error || "service unavailable (HTTP " + res.status + ")"),
+              "error"
+            );
+          }
+
+          signature = data.signature;
+        }
+
+        log("3/3: Submitting verified attestation & signature to BOT Chain...");
+
+        const tx = await contract.submitVerifiedTrip(
+          tripId,
+          distanceMeters,
+          durationSeconds,
+          routeHash,
+          signature
+        );
+
+        log("Transaction broadcasted! Tx Hash: " + tx.hash + ". Awaiting confirmation...", "info");
+        await tx.wait();
+
+        log("✅ Trip verified on-chain! $GREEN tokens minted to your wallet.", "info");
+        await loadStats();
+
+      } catch (err) {
+        console.error(err);
+        // Extracts human-readable message if EVM appends raw hex data
+        let rawMsg = err.reason || err.message || "Transaction Failed";
+        if (rawMsg.includes("Trip distance exceeds maximum limit")) {
+          log("❌ Rejected by Contract: Distance exceeds 100 km single-trip cap.", "error");
+        } else if (rawMsg.includes("Speed exceeds")) {
+          log("❌ Rejected by Contract: Speed exceeds 25 km/h threshold (Automobile detected).", "error");
+        } else if (rawMsg.includes("Cooldown period active")) {
+          log("❌ Rejected by Contract: Cooldown active for this wallet.", "error");
+        } else if (rawMsg.includes("Trip already processed")) {
+          log("❌ Rejected by Contract: Duplicate tripId (Replay Attack blocked).", "error");
+        } else if (rawMsg.includes("Invalid or forged trip signature")) {
+          log("❌ Rejected by Contract: signature does not match verifierAddress. Check setVerifierAddress and the server's CONTRACT_ADDRESS / CHAIN_ID.", "error");
+        } else {
+          log("❌ Transaction Failed: " + rawMsg.split(":")[0], "error");
+        }
+      }
+    }
+
+    async function loadStats() {
+      if (!contract) return;
+      try {
+        const distMeters = await contract.totalDistanceMeters(userAddress);
+        const tokenBalance = await contract.balanceOf(userAddress);
+
+        document.getElementById("userDist").innerText = (distMeters.toNumber() / 1000).toFixed(2);
+        document.getElementById("userRewards").innerText = ethers.utils.formatUnits(tokenBalance, 18);
+      } catch (err) {
+        console.error("Error loading stats:", err);
+      }
+    }
+  </script>
+</body>
+</html>

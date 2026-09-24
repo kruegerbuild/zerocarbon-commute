@@ -1,0 +1,8 @@
+{
+  "name": "zerocarbon-commute",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "ethers": "5.7.2"
+  }
+}
