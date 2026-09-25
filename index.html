@@ -303,7 +303,7 @@
   <script>
     // --- CONFIGURATION ---
     // !!! MUST UPDATE THIS WITH YOUR NEWLY DEPLOYED CONTRACT ADDRESS !!!
-    const contractAddress = "0xaa08458482Bc92fC9AFA7D29d7D87F8093A885a6"; 
+    const contractAddress = "0x4d278F96E72E4E3feD2dCEA3b5D362318B33d7c2"; 
     
     // Verifier signing now happens server-side in /api/attest (the key never touches the browser).
     const ATTEST_URL = "/api/attest";
@@ -312,11 +312,11 @@
     // true  = sign with the connected MetaMask wallet (old behaviour). Works with Live Server / file hosting,
     //         but ONLY if the connected wallet is the contract's verifierAddress. Testnet use only.
     // false = request the signature from /api/attest (required for real users and for mainnet).
-    const LOCAL_SIGNING_FOR_TESTING = false;
+    const LOCAL_SIGNING_FOR_TESTING = true;
 
     // Set to your TESTNET chain ID (a number, e.g. 12345) to block submissions on the wrong network.
     // Leave as null to skip the check.
-    const EXPECTED_CHAIN_ID = 677;
+    const EXPECTED_CHAIN_ID = null;
 
     const contractABI = [
       "function submitVerifiedTrip(bytes32 tripId, uint256 distanceMeters, uint256 durationSeconds, bytes32 routeHash, bytes signature) external",
@@ -338,6 +338,31 @@
     async function getLiveChainId() {
       const hex = await window.ethereum.request({ method: "eth_chainId" });
       return parseInt(hex, 16);
+    }
+
+    // Actively asks MetaMask to switch THIS SITE'S connection to the expected chain.
+    // Needed because MetaMask can keep a site pinned to an old chain even after you
+    // switch networks in the main extension window (a per-site connection quirk).
+    async function ensureCorrectChain() {
+      if (EXPECTED_CHAIN_ID === null) return true;
+      const currentId = await getLiveChainId();
+      if (currentId === EXPECTED_CHAIN_ID) return true;
+
+      const hexId = "0x" + EXPECTED_CHAIN_ID.toString(16);
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: hexId }]
+        });
+        return true;
+      } catch (err) {
+        if (err.code === 4902) {
+          log("❌ That network isn't added in MetaMask yet. Add it manually, then try again.", "error");
+        } else {
+          log("❌ Could not switch network: " + (err.message || "request rejected"), "error");
+        }
+        return false;
+      }
     }
 
     // Force a clean reconnect if the user switches networks mid-session, instead of trusting
@@ -434,10 +459,12 @@
         const mockRouteCoords = "[[37.7749,-122.4194],[37.7752,-122.4180]]"; 
         const routeHash = ethers.utils.solidityKeccak256(["string"], [mockRouteCoords]);
 
+        const switched = await ensureCorrectChain();
+        if (!switched) return;
         const chainId = await getLiveChainId();
 
         if (EXPECTED_CHAIN_ID !== null && chainId !== EXPECTED_CHAIN_ID) {
-          return log("❌ Wrong network: switch MetaMask to the testnet (chain ID " + EXPECTED_CHAIN_ID + ").", "error");
+          return log("❌ Wrong network: switch MetaMask to chain ID " + EXPECTED_CHAIN_ID + ".", "error");
         }
 
         let signature;
