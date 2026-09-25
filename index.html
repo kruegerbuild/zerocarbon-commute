@@ -311,9 +311,9 @@
     // true  = sign with the connected MetaMask wallet (old behaviour). Works with Live Server / file hosting,
     //         but ONLY if the connected wallet is the contract's verifierAddress. Testnet use only.
     // false = request the signature from /api/attest (required for real users and for mainnet).
-    const LOCAL_SIGNING_FOR_TESTING = true;
+    const LOCAL_SIGNING_FOR_TESTING = false;
 
-    const EXPECTED_CHAIN_ID = null;
+    const EXPECTED_CHAIN_ID = 677;
 
     const contractABI = [
       "function submitVerifiedTrip(bytes32 tripId, uint256 distanceMeters, uint256 durationSeconds, bytes32 routeHash, bytes signature) external",
