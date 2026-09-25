@@ -302,8 +302,7 @@
 
   <script>
     // --- CONFIGURATION ---
-    // !!! MUST UPDATE THIS WITH YOUR NEWLY DEPLOYED CONTRACT ADDRESS !!!
-    const contractAddress = "0x4d278F96E72E4E3feD2dCEA3b5D362318B33d7c2"; 
+    const contractAddress = "0xaa08458482Bc92fC9AFA7D29d7D87F8093A885a6"; 
     
     // Verifier signing now happens server-side in /api/attest (the key never touches the browser).
     const ATTEST_URL = "/api/attest";
@@ -314,8 +313,6 @@
     // false = request the signature from /api/attest (required for real users and for mainnet).
     const LOCAL_SIGNING_FOR_TESTING = true;
 
-    // Set to your TESTNET chain ID (a number, e.g. 12345) to block submissions on the wrong network.
-    // Leave as null to skip the check.
     const EXPECTED_CHAIN_ID = null;
 
     const contractABI = [
