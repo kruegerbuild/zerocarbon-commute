@@ -312,10 +312,11 @@
     // true  = sign with the connected MetaMask wallet (old behaviour). Works with Live Server / file hosting,
     //         but ONLY if the connected wallet is the contract's verifierAddress. Testnet use only.
     // false = request the signature from /api/attest (required for real users and for mainnet).
-    const LOCAL_SIGNING_FOR_TESTING = false;
+    const LOCAL_SIGNING_FOR_TESTING = true;
 
     // Set to your TESTNET chain ID (a number, e.g. 12345) to block submissions on the wrong network.
-    const EXPECTED_CHAIN_ID = 968;
+    // Leave as null to skip the check.
+    const EXPECTED_CHAIN_ID = null;
 
     const contractABI = [
       "function submitVerifiedTrip(bytes32 tripId, uint256 distanceMeters, uint256 durationSeconds, bytes32 routeHash, bytes signature) external",
@@ -330,6 +331,24 @@
       logBox.innerText = msg;
       logBox.className = "status-box " + type;
       console.log("[ZeroCarbon]", msg);
+    }
+
+    // Reads the network MetaMask is ACTUALLY on right now, bypassing ethers' cached network object
+    // (ethers.providers.Web3Provider can keep returning the chain ID seen at connect time).
+    async function getLiveChainId() {
+      const hex = await window.ethereum.request({ method: "eth_chainId" });
+      return parseInt(hex, 16);
+    }
+
+    // Force a clean reconnect if the user switches networks mid-session, instead of trusting
+    // any state (provider, contract) that was set up for the previous network.
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", () => {
+        log("Network changed. Please reconnect your wallet.", "error");
+        document.getElementById("submitBtn").disabled = true;
+        document.getElementById("walletStatus").innerText = "Status: Disconnected (network changed)";
+        contract = null;
+      });
     }
 
     let connecting = false;
@@ -415,8 +434,7 @@
         const mockRouteCoords = "[[37.7749,-122.4194],[37.7752,-122.4180]]"; 
         const routeHash = ethers.utils.solidityKeccak256(["string"], [mockRouteCoords]);
 
-        const network = await provider.getNetwork();
-        const chainId = network.chainId;
+        const chainId = await getLiveChainId();
 
         if (EXPECTED_CHAIN_ID !== null && chainId !== EXPECTED_CHAIN_ID) {
           return log("❌ Wrong network: switch MetaMask to the testnet (chain ID " + EXPECTED_CHAIN_ID + ").", "error");
