@@ -189,6 +189,8 @@
 
     .logo-container { text-align: center; margin-bottom: 20px; }
     .logo-container svg { max-width: 100%; height: auto; filter: drop-shadow(0 6px 18px rgba(16, 185, 129, 0.25)); }
+    .logo-container svg a { cursor: pointer; }
+    .logo-container svg a:hover text { fill: #7dd3fc; }
 
     .sim-note {
       background: rgba(51, 65, 85, 0.40);
@@ -260,15 +262,17 @@
         <rect x="448" y="46" width="24" height="24" rx="4" />
       </clipPath>
     </defs>
-    
-      <!-- Badge Frame -->
-      <rect x="440" y="40" width="140" height="36" rx="6" fill="rgba(51,65,85,0.55)" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
-      
-      <!-- JPEG Image with Clip Path -->
-      <image href="botchain-logo.jpeg" xlink:href="botchain-logo.jpeg" x="448" y="46" width="24" height="24" clip-path="url(#rounded-jpeg)" />
-      
-      <!-- Label Text -->
-      <text x="525" y="64" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-weight="bold" font-size="18">BOT CHAIN</text>
+
+      <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer">
+        <!-- Badge Frame -->
+        <rect x="440" y="40" width="140" height="36" rx="6" fill="rgba(51,65,85,0.55)" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        
+        <!-- JPEG Image with Clip Path -->
+        <image href="botchain-logo.jpeg" xlink:href="botchain-logo.jpeg" x="448" y="46" width="24" height="24" clip-path="url(#rounded-jpeg)" />
+        
+        <!-- Label Text -->
+        <text x="525" y="64" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-weight="bold" font-size="18">BOT CHAIN</text>
+      </a>
     </svg>
   </div>
 
@@ -568,5 +572,10 @@
       }
     }
   </script>
+  <footer style="text-align:center; margin-top: 24px; padding: 16px; font-size: 0.8rem; color: rgba(248,250,252,0.55);">
+    <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer" style="color: var(--sky); text-decoration: none; margin: 0 10px;">botchain.ai</a>
+    ·
+    <a href="https://scan.botchain.ai/address/0xaa08458482Bc92fC9AFA7D29d7D87F8093A885a6" target="_blank" rel="noopener noreferrer" style="color: var(--sky); text-decoration: none; margin: 0 10px;">View contract on Explorer</a>
+  </footer>
 </body>
 </html>
