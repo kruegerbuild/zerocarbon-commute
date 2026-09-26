@@ -4,8 +4,8 @@
 
 ZeroCarbon Commute is a software-only DePIN (Decentralized Physical Infrastructure Network) protocol that rewards walking, cycling and scootering with real ERC-20 **$GREEN** tokens. Trips are attested by an off-chain verifier, and the smart contract independently enforces speed, distance, cooldown and anti-replay rules before minting anything.
 
-> **Network:** BOT Chain Testnet (Chain ID `968`)
-> **Status:** Hackathon prototype, verified end-to-end on testnet (backend attestation → on-chain mint). Telemetry is simulated in the demo (see [Limitations](#limitations--roadmap)). Mainnet deployment is planned but not yet live.
+> **Network:** BOT Chain Testnet (Chain ID `968`) and BOT Chain Mainnet (Chain ID `677`)
+> **Status:** Deployed and verified end-to-end on testnet (backend attestation → on-chain mint), and now live on mainnet. Telemetry is simulated in the demo (see [Limitations](#limitations--roadmap)).
 
 ---
 
@@ -72,6 +72,17 @@ The signed message binds together: the user's wallet, the contract address, the 
 
 **Public functions:** `submitVerifiedTrip(...)`, `balanceOf(address)`, `totalDistanceMeters(address)`, `verifierAddress()`, `processedTrips(bytes32)`, `lastTripTimestamp(address)`.
 **Owner-only:** `setVerifierAddress(address)`, `setCooldownPeriod(uint256)`.
+
+---
+
+## Deployment
+
+| Network | Chain ID | Contract Address | Status |
+|---|---|---|---|
+| BOT Chain Testnet | `968` | `0x4d278F96E72E4E3feD2dCEA3b5D362318B33d7c2` | ✅ Live, verified end-to-end |
+| BOT Chain Mainnet | `677` | `0xaa08458482Bc92fC9AFA7D29d7D87F8093A885a6` | ✅ Live |
+
+> Verify these addresses yourself on the BOT Chain block explorer before interacting with the contract. This table will be updated once mainnet is live.
 
 ---
 
