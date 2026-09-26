@@ -82,10 +82,6 @@ The signed message binds together: the user's wallet, the contract address, the 
 | BOT Chain Testnet | `968` | `0x4d278F96E72E4E3feD2dCEA3b5D362318B33d7c2` | ✅ Live, verified end-to-end |
 | BOT Chain Mainnet | `677` | `0xaa08458482Bc92fC9AFA7D29d7D87F8093A885a6` | ✅ Live |
 
-> Verify these addresses yourself on the BOT Chain block explorer before interacting with the contract. This table will be updated once mainnet is live.
-
----
-
 ## Project structure
 
 ```
